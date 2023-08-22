@@ -1106,7 +1106,7 @@ if st.button('Calculate'):
 
         
             new_row = {'Temperature': T, 'Classical Virial Coefficient': result, 'First Virial Correction': result_c1, 
-           'Second Virial Correction': result_c2, 'Third Virial Correction': result_c3, 'Fourth Virial Correction': result_c4}
+           'Second Virial Correction': result_c2, 'Third Virial Correction': result_c3, 'Fourth Virial Correction': result_c4, 'reference' :B_virial_state}
 
             data_virial = pd.concat([data_virial, pd.DataFrame(new_row, index=[0])], ignore_index=True)
 
