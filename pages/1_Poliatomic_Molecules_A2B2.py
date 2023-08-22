@@ -1057,7 +1057,7 @@ if st.button('Calculate'):
 
             for T in range(50, 1000, step):
 
-                integ(integrand_vegas, nitn=25, neval=20000)
+                integ(integrand_vegas, nitn=10, neval=10000)
 
                 integ(integrand_c1, nitn=10, neval=1000)
 
@@ -1065,7 +1065,7 @@ if st.button('Calculate'):
                 integ(integrand_c3, nitn=10, neval=1000)
                 integ(integrand_c4, nitn=10, neval=1000)
 
-                result = integ(integrand_vegas, nitn=25, neval=20000)
+                result = integ(integrand_vegas, nitn=10, neval=10000)
 
                 # st.write(result.summary())
 
