@@ -667,7 +667,7 @@ if st.button('Calculate'):
 
             B_B2_ref = []
             T_B2_ref = []
-
+            T = step
             Reqs = np.array([H.Req, X.Req, Z.Req, Ta.Req, Tb.Req, L.Req])
 
             media_Reqs = mean(Reqs)
@@ -1057,7 +1057,7 @@ if st.button('Calculate'):
             B_correcoes = []
             B_plus_all_except_c2 = []
 
-            T = step
+            
             integ(integrand_vegas, nitn=10, neval=1000)
 
             integ(integrand_c1, nitn=10, neval=1000)
