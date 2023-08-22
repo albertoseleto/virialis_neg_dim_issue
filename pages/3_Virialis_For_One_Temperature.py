@@ -18,13 +18,23 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
 
+
+
+
+# Specify what pages should be shown in the sidebar, and what their titles 
+# and icons should be
+
+
+
 # TIME MEASURE
 
-start = time.time()
-st.title('Virialis')
+
+
 
 
 # DATA ENTRY
+st.title('Second Virial Coefficient Calculator for A2B2 Molecule')
+
 uploaded_file = st.file_uploader("upload a file")
 
 potential = st.selectbox(
@@ -32,9 +42,14 @@ potential = st.selectbox(
     ('Rydberg Potential', 'Improved Leonard-Jonnes Potential'))
 
 
-step = st.selectbox(
-    'What is the Temperature step that you want to use?',
-    (100, 50, 25, 200, 300))
+step = st.text_input(
+    'For what Temperature do you want to calculate?')
+
+
+try:
+    step = float(step)
+except:
+    pass
 
 
 gas_type = st.selectbox(
@@ -43,7 +58,7 @@ gas_type = st.selectbox(
 
 
 st.write('The calculus will be made using ', potential,
-         'on a gas of structure ', gas_type, 'using a temperature step of', step)
+         'on a gas of structure ', gas_type, 'using a temperature of', step)
 
 if gas_type == 'A2B2':
 
@@ -56,7 +71,7 @@ if gas_type == 'A2B2':
     gas = monomero1 + monomero2
 
 data_virial = pd.DataFrame()
-T = 300
+
 class constants:
 
     rk = 7.24356  # 7.24297  #1/(8.6173324e-5)
@@ -135,17 +150,15 @@ class num_diff:
 
 
 if st.button('Calculate'):
+    start = time.time()
     if uploaded_file is not None:
 
         if gas_type == 'A2B2':
 
-            st.write('the gas is ', gas)
-
-            if potential == 'Both of them':
-                print('ok')
+            st.write('Calculating for ', gas, '...')
 
             if potential == 'Improved Leonard-Jonnes Potential' :
-                st.write('LEONARD-JONNES IS IN CONSTRUCTION')
+                st.write('LEONARD-JONNES IS IN CONSTRUCTION...')
 
                 data = pd.read_csv(uploaded_file, sep="\s+", header=None)
                 data.columns = ["alpha", "beta", "mp", "De", "Req" ]
@@ -659,7 +672,7 @@ if st.button('Calculate'):
 
             media_Reqs = mean(Reqs)
             if gas == 'F2F2':
-                st.write('f2f2')
+                #st.write('f2f2')
                 m1 = massaF
                 m2 = massaF
                 m3 = massaF
@@ -705,13 +718,13 @@ if st.button('Calculate'):
                 x2 = 0.5
 
                 def B_A2_ref(T):
-                    return B_references.BH2_ref(T)
+                    return B_references.BF2_ref(T)
 
                 def B_B2_ref(T):
-                    return B_references.BH2_ref(T)
+                    return B_references.BF2_ref(T)
 
             elif gas == 'H2F2':
-                st.write('h2f2')
+                #st.write('h2f2')
                 m1 = massaH
                 m2 = massaH
                 m3 = massaF
@@ -760,7 +773,7 @@ if st.button('Calculate'):
                     return B_references.BH2_ref(T)
 
             elif gas == 'H2H2':
-                st.write('h2h2')
+                #st.write('h2h2')
 
                 m1 = massaH
                 m2 = massaH
@@ -805,7 +818,7 @@ if st.button('Calculate'):
                     return B_references.BH2_ref(T)
 
             elif gas == 'H2Br2':
-                st.write('h2Br2')
+                #st.write('h2Br2')
                 m1 = massaH
                 m2 = massaH
                 m3 = massaBr
@@ -845,7 +858,7 @@ if st.button('Calculate'):
                 x2 = 0.5
 
             else:
-                st.write('h2cl2')
+                #st.write('h2cl2')
                 m1 = massaH
                 m2 = massaH
                 m3 = massaCl
@@ -892,7 +905,7 @@ if st.button('Calculate'):
                 def B_B2_ref(T):
                     return B_references.BH2_ref(T)
                 
-            st.write('media_Reqs = ', media_Reqs, 'r1 = ',r1, 'r2 = ',r2, 'r3 = ', r3, 'r4 = ',r4 ,  'I1 = ', I1,  'I2 = ', I2,  'mi1 = ', mi1,  'mi2 = ', mi2)
+            #st.write('media_Reqs = ', media_Reqs, 'r1 = ',r1, 'r2 = ',r2, 'r3 = ', r3, 'r4 = ',r4 ,  'I1 = ', I1,  'I2 = ', I2,  'mi1 = ', mi1,  'mi2 = ', mi2)
 
             B_virial_state_ref = []
             T_state = []
@@ -904,7 +917,7 @@ if st.button('Calculate'):
             lim_sup = 10*lims/2
             r0 = 4.22  # mean(Reqs)
 
-            for T in range(300, 1000, 5):
+            for T in range(60, 500, 5):
 
                 B_cruzado = (0.25*(22.1*Mb + Ma*(22.1 + Mb*T)) * (0.083 + 0.0695*w1 + 0.0695*w2) * (
                     rho_1**(1/3) + rho_2**(1/3))**3) / ((10.9*Ma + 10.9*Mb + Ma*Mb*T)*(zc1 + zc2) * rho_1 * rho_2)
@@ -1033,7 +1046,7 @@ if st.button('Calculate'):
                 return c4
 
             integ = vegas.Integrator(
-                [[0, 5], [0, np.pi], [0, np.pi], [0, 2*np.pi]])
+                [[0, 10], [0, np.pi], [0, np.pi], [0, 2*np.pi]])
 
             B_clas = []
             Tstr = []
@@ -1047,34 +1060,56 @@ if st.button('Calculate'):
             B_correcoes = []
             B_plus_all_except_c2 = []
 
-
+            T = step
             integ(integrand_vegas, nitn=10, neval=1000)
 
-            result = integ(integrand_vegas, nitn=10, neval=1000)
             integ(integrand_c1, nitn=10, neval=1000)
 
             integ(integrand_c2, nitn=10, neval=1000)
             integ(integrand_c3, nitn=10, neval=1000)
             integ(integrand_c4, nitn=10, neval=1000)
+
+            result = integ(integrand_vegas, nitn=10, neval=1000)
+
+            # st.write(result.summary())
+
+            st.write('result of classic virial = ', result, 'for T = ', T)
+            
+            B_clas.append(result.mean)
+            Tstr.append(T)
+
             result_c1 = integ(integrand_c1, nitn=10, neval=1000)
 
             result_c2 = integ(integrand_c2, nitn=10, neval=1000)
             result_c3 = integ(integrand_c3, nitn=10, neval=1000)
             result_c4 = integ(integrand_c4, nitn=10, neval=1000)
 
+            #st.write('result VEGAS c1 = ', result_c1)
+            #st.write('result VEGAS c2 = ', result_c2)
+            #st.write('result VEGAS c3 = ', result_c3)
+            #st.write('result VEGAS c4 =', result_c4)
 
-            # st.write(result.summary())
-            st.write(T)
-            st.write('result VEGAS = ', result)
-            st.write('result VEGAS c1 = ', result_c1)
-            st.write('result VEGAS c2 = ', result_c2)
-            st.write('result VEGAS c3 = ', result_c3)
-            st.write('result VEGAS c4 =', result_c4)
+            st.write('result of final virial =', result.mean + result_c1.mean +
+                        result_c2.mean + result_c3.mean + result_c4.mean, 'for T = ', T)
+
+            B_main.append(result.mean + result_c1.mean +
+                            result_c2.mean + result_c3.mean + result_c4.mean)
+
+            B_c1.append(result_c1.mean)
+            B_c2.append(result_c2.mean)
+            B_c3.append(result_c3.mean)
+            B_c4.append(result_c4.mean)
+            B_correcoes.append(
+                +result_c2.mean + result_c3.mean + result_c1.mean + result_c4.mean)
+
+            B_plus_all_except_c2.append(
+                +result.mean + result_c1.mean + result_c3.mean + result_c4.mean)
             
-            B_clas.append(-result.mean)
-            Tstr.append(T)
-      
-            data_virial = data_virial.append({'Temperature':T,'Classical Virial Coefficient':result.mean, 'Reference': B_virial_state_ref},ignore_index=True)
+
+
+            data_virial = data_virial.append({'Temperature':T,'Classical Virial Coefficient':result.mean, 'First Virial Correction':result_c1.mean, 
+                'Second Virial Correction':result_c2.mean, 'Third Virial Correction':result_c3.mean, 'Fourth Virial Correction':result_c4.mean,},ignore_index=True)
+            
 
             st.write(data_virial)
             r = np.linspace(0, 10, 100)
@@ -1136,6 +1171,24 @@ if st.button('Calculate'):
                 go.Scatter(x=r, y=complexa.UM_224(r), name='UM_224')
             )
 
+            # ax2.set_xlim([2, 9]) #1.2 B
+            # ax2.set_ylim([-0.4, 2]) #inferior : B(T=10) * 1.1 superior: B(T=500)* 1.2
+            # ******************ax2.set_ylabel(r'$U(r)[eV]$')
+            # *****************ax2.set_xlabel(r'$r[Å]$', labelpad=1)
+
+
+
+            # ax3.plot(T_ref, B_ref,   color='b',label = 'ref') #Breferencia
+
+            #ax3.plot(Tstr, B_main,   color='yellow',label = 'Bmain')
+
+            # ****************** ax3.set_ylabel(r'$B[cm^3/mol]$')
+            # ***************ax3.set_xlabel(r'$T[K]$', labelpad=1)
+        
+            #plt.subplot(Tstr, Bstr)
+            #plt.scatter(Tstr, Bstr)
+            #plt.title(f'Gráficos (a) do , name. You are age.')
+
             fig1.update_xaxes(range=[0, 10])
             fig1.update_yaxes(range=[-3*H.De, 3*H.De])
 
@@ -1150,25 +1203,27 @@ if st.button('Calculate'):
             #fig.update_xaxes( range=[0, 5], showgrid=False)
 
             fig1.update_layout(height=600, width=800,
-                               title_text="Side By Side Subplots")
+                               title_text="Graph of Leading Configurations per Distance", xaxis_title=r"$r[A]$",
+                               yaxis_title='U[eV]'
+                                )
             st.plotly_chart(fig1, use_container_width=True)
 
             fig2.update_layout(height=600, width=800,
-                               title_text="Side By Side Subplots")
+                               title_text="Graph of Complex Energies per Distance", xaxis_title=r"$r[A]$",
+                               yaxis_title='U[eV]')
             st.plotly_chart(fig2, use_container_width=True)
 
 
-            print('evaluation time {}'.format(time.strftime(
-                "%H:%M:%S", time.gmtime(time.time()-start))))
-            print('number of temperatures:', len(Tstr))
+
+
 
             # st.pyplot(f)
             #st.pyplot(f, ax1, ax2,ax3)
-            print('evaluation time {}'.format(time.strftime(
+            st.write('evaluation time {}'.format(time.strftime(
                 "%H:%M:%S", time.gmtime(time.time()-start))))
-            print('number of temperatures:', len(Tstr))
+            st.write('number of temperatures:', len(Tstr))
 
-            st.write('done')
+            st.success('Calculations finished!', icon="✅")
         elif gas_type == 'AB':
             st.write('If you wish to calculate the second virial coefficient of a diatomic molecule, please reffer to the page "diatomic molecules AB')
 
