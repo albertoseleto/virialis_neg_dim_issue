@@ -905,6 +905,7 @@ if st.button('Calculate'):
                 def B_B2_ref(T):
                     return B_references.BH2_ref(T)
                 
+                
             #st.write('media_Reqs = ', media_Reqs, 'r1 = ',r1, 'r2 = ',r2, 'r3 = ', r3, 'r4 = ',r4 ,  'I1 = ', I1,  'I2 = ', I2,  'mi1 = ', mi1,  'mi2 = ', mi2)
 
             B_virial_state_ref = []
@@ -917,17 +918,13 @@ if st.button('Calculate'):
             lim_sup = 10*lims/2
             r0 = 4.22  # mean(Reqs)
 
-            for T in range(60, 500, 5):
+        
 
-                B_cruzado = (0.25*(22.1*Mb + Ma*(22.1 + Mb*T)) * (0.083 + 0.0695*w1 + 0.0695*w2) * (
-                    rho_1**(1/3) + rho_2**(1/3))**3) / ((10.9*Ma + 10.9*Mb + Ma*Mb*T)*(zc1 + zc2) * rho_1 * rho_2)
+            B_cruzado = (0.25*(22.1*Mb + Ma*(22.1 + Mb*T)) * (0.083 + 0.0695*w1 + 0.0695*w2) * (rho_1**(1/3) + rho_2**(1/3))**3) / ((10.9*Ma + 10.9*Mb + Ma*Mb*T)*(zc1 + zc2) * rho_1 * rho_2)
 
-                B_virial_state = 2*x1*x2*B_cruzado + \
-                    x2**2*B_A2_ref(T) + x1**2*B_B2_ref(T)
+            B_virial_state = 2*x1*x2*B_cruzado + x2**2*B_A2_ref(T) + x1**2*B_B2_ref(T)
 
-                B_virial_state_ref.append(B_virial_state)
-                T_state.append(T)
-
+            B_virial_state_ref.append(B_virial_state)
 
             def integrand_vegas(x):
                 r = x[0]
@@ -1105,7 +1102,7 @@ if st.button('Calculate'):
             B_plus_all_except_c2.append(
                 +result.mean + result_c1.mean + result_c3.mean + result_c4.mean)
             
-
+            
 
         
             new_row = {'Temperature': T, 'Classical Virial Coefficient': result, 'First Virial Correction': result_c1, 
