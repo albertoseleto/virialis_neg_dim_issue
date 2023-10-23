@@ -64,7 +64,7 @@ st.write('The calculus will be made using ', potential,
 
 atom1 = st.selectbox(
     'What is your first atom?',
-    ('H', 'F', 'Cl', 'Br', 'O'))
+    ('H', 'F', 'Cl', 'Br', 'O', 'C'))
 atom2 = st.selectbox(
     'What is your second atom?',
     ('H', 'F', 'Cl', 'Br','O'))
@@ -73,10 +73,10 @@ gas = atom1 + atom2
 
 
 #DEFININDO CONSTANTES
-
-rk=4.184/(1.38064853*6.02252) #   503.188016899  #7.24297 #*10**22
+kb = 0.0019872041*1000# para kcal/mol, *1000 nao sei pq //#8.617332478e-5 eV/K
+rk= 1/(kb)    #4.184/(1.38064853*6.02252) #   503.188016899  #7.24297 #*10**22
 h=1.05451  #*10**-34
-N_A=6.02252
+N_A=0.602252
 r0=  1.33 #Req
 irk= 1.0/rk
 K=-272.15
@@ -148,29 +148,64 @@ def derivative2(g,a,method='central',p=0.01): #derivada de segunda ordem
     else:
         raise ValueError("Method must be 'central', 'forward' or 'backward'.")
         
-        
+def monte_carlo_uniform(func, a=0, b=1, n=1000):
+    subsets = np.arange(0,n+1,n/10)
+    steps=n/10
+    u=np.zeros(n)
+    for i in range(10):
+        start = int(subsets[i])
+        end = int(subsets[i+1])
+        u[start:end] = np.random.uniform(low=i/10, high=(i+1)/10, size=end-start)
+    np.random.shuffle(u)
+    u_func=func(a+(b-a)*u)
+    s= ((b-a)/n)*u_func.sum()
+    
+    return s            
      
 
 if st.button('Calculate'):
     if uploaded_file is not None:
 
         if potential == 'Improved Leonard-Jonnes Potential' :
-                st.write('LEONARD-JONNES IS IN CONSTRUCTION')
+            st.write('LENNARD-JONNES IS IN CONSTRUCTION')
+            data = pd.read_csv(uploaded_file, sep="\s+", header=None)
+            data.columns = ["alpha", "beta", "mp", "De", "Req" ]
+            st.subheader('DataFrame')
+            st.write(data)
+
+
+            alpha = float(data['alpha'])
+            beta = float(data['beta'])
+            mp = float(data['mp'])
+            De = float(data['De'])
+            Req = float(data['Req'])
+            
+            def U(r):
+
+                n = beta + alpha * (r / Req) ** 2
+                return De * ((mp/(n - mp) * (Req/r) ** n) - (n/(n - mp) * (Req/r) ** mp))
+
+            def fprincipal(r):
+                F=U(r)*rk/T
+
+                return (r**2)*(1-np.exp(-F))#*10**-8
 
         elif potential == 'Rydberg Potential':
         
             data = pd.read_csv(uploaded_file, sep="\s+", header=None)
-            data.rows = ["a1", "a2", "a3", "a4", 'a5', 'De', 'Req', 'Eref']
+            data.columns = ["a1", "a2", "a3", "a4", 'a5', 'De', 'Req', 'Eref']
             st.subheader('DataFrame')
             st.write(data)
-            a1 = data.iloc[0]
-            a2 = data.iloc[1]
-            a3 = data.iloc[2]
-            a4 = data.iloc[3]
-            a5 = data.iloc[4]
-            De = data.iloc[5]
-            Req = data.iloc[6]
-            Eref = data.iloc[7]
+
+            a1 = float(data['a1'])
+            a2 = float(data['a2'])
+            a3 = float(data['a3'])
+            a4 = float(data['a4'])
+            a5 = float(data['a5'])
+            De = float(data['De'])
+            Req = float(data['Req'])
+            Eref = float(data['Eref'])
+
 
 
             print(a1, a2, De, Req)
@@ -179,9 +214,9 @@ if st.button('Calculate'):
             #POTENCIAL
             def U(r):
                 y = (r-Req)/Req
-                U = -De*(1 + a1*y + a2*y**2 + a3*y**3 +
+                result = -De*(1 + a1*y + a2*y**2 + a3*y**3 +
                 a4*y**4 + a5*y**5) * np.exp(-a1*y) + Eref
-                return U
+                return result
                 
 
             #FUNÇÃO PRINCIPAL QUE SERÁ INTEGRADA
@@ -189,95 +224,12 @@ if st.button('Calculate'):
                 F=U(r)*rk/T
 
             
-                return (r**2)*(1-np.exp(-F))#*10**-8
+                return (r**2)*(1-np.exp(-F))
 
         
-            def monte_carlo_uniform(func, a=0, b=1, n=1000):
-                subsets = np.arange(0,n+1,n/10)
-                steps=n/10
-                u=np.zeros(n)
-                for i in range(10):
-                    start = int(subsets[i])
-                    end = int(subsets[i+1])
-                    u[start:end] = np.random.uniform(low=i/10, high=(i+1)/10, size=end-start)
-                np.random.shuffle(u)
-                u_func=func(a+(b-a)*u)
-                s= ((b-a)/n)*u_func.sum()
-                
-                return s
 
 
 
-
-            def lim_inf(r):
-                F=U(r)*rk/10
-
-                
-                return (r**2)*(1-np.exp(-F))#*10**-8
-
-
-            def lim_sup(r):
-                F=U(r)*rk/500
-
-            
-                return (r**2)*(1-np.exp(-F))#*10**-8
-
-
-
-
-            def f1correção(r): #função usada na primeira correção
-                
-                    
-                derivadinha=derivative(U,r,method='central',p=1e-8)
-                
-            
-                        
-                    #derivadinha=derivative(derivada, 1.0, dx=1e-6)
-                    
-                    #print(derivadinha)
-                
-                return (r**2)*(derivadinha**2)*(np.exp(-U(r)/(irk*T)))
-
-
-            def f2correção(r): #função usada na segunda correção
-                
-            
-                    
-            
-            
-                        
-                    #derivadinha=derivative(derivada, 1.0, dx=1e-6)
-                    
-                    #print(derivadinha)
-                
-                return (r**2)*(np.exp(-U(r)/(irk*T)))#*derivada parcial Dv/Dr
-
-            def f3correção(r): #função usada na terceira correção
-                
-            
-                    
-            
-            
-                        
-                    #derivadinha=derivative(derivada, 1.0, dx=1e-6)
-                    
-                    #print(derivadinha)
-                
-                return (r**2)*(np.exp(-U(r)/(irk*T)))#*derivada parcial Dv/Dr
-
-            def f4correção(r): #função usada na quarta correção
-                
-            
-                    
-            
-                
-                    
-                derivadinha=derivative(U,r,method='central',p=1e-8)
-                derivadinha2=derivative2(U,r,method='central',p=1e-8)
-                        
-                    
-                
-                return (np.exp(-U(r)/(irk*T)))*(((derivadinha2)**2) + (2/(r**2))*(derivadinha**2) + (10/(9*irk*T*r))*((derivadinha)**3) - (5/(36*(irk**2)*(T**2)))*((derivadinha)**4)) * (r**2)#*derivada parcial Dv/Dr
 
 #INPUT DAS MASSAS PARA O MI
 
@@ -352,196 +304,130 @@ if st.button('Calculate'):
         Tstr=[]
         Bmonte=[]
 
-        rstr=[]
-        upot_str=[]
+        R_0 = 1.15
         #CALCULO DAS INTEGRAIS E COEFICIENTES VIRIAIS PARA DIFERENTES TEMPERATURAS
-        for T in range(10, 100, 5): #CALCULOS QUE SERÃO FEITOS NO PRIMEIRO INTERVALO DE TEMPERATURA
+        for T in range(10, 100, 20): #CALCULOS QUE SERÃO FEITOS NO PRIMEIRO INTERVALO DE TEMPERATURA
         
             integralprinc1, err0i1 = quad(fprincipal,0,np.inf) #integração
 
 
             
-            B1=(2*np.pi*N_A)*(integralprinc1+(r0**3)/3)# #coef do virial principal 
-
-            
-            inte1=monte_carlo_uniform(fprincipal,a=0,b=2,n=1800)
-            Bmonte1=(2*np.pi*N_A)*(inte1+(r0**3)/3)
-            
-            corr1i1, err1i1 =quad(f1correção,0,np.inf) #integração
-        
-            B1corr1=((N_A*10**-24*(h**2))*(corr1i1))/(48*(irk**3)*(T**3)*mi) #coef do virial da primeira correção
+            B1=(2*np.pi*N_A)*(integralprinc1+(R_0**3)/3)# #coef do virial principal 
 
 
+            inte1=monte_carlo_uniform(fprincipal,a=0,b=10,n=1800)
+            B1mc=(2*np.pi*N_A)*(inte1+(R_0**3)/3)    
+            
+            
+        
 
-            corr2i1, err2i1 =quad(f2correção,0,np.inf) #integração
-            
-            B1corr2=((-N_A*10**-24)*(corr2i1))/(48*(irk**3)*(T**3))  #coef do virial da segunda correção
-            
-        
-            # d1 = decimal.Decimal(B1)
-        
-            corr3i1, err3i1 =quad(f3correção,0,np.inf) #integração
-            #print(integral1)
-            #print(integral1, T)
-            B1corr3=((-N_A*10**-24)*(corr3i1))/(48*(irk**3)*(T**3))
-
-        
-            corr4i1, err4i1 =quad(f4correção,0,np.inf) #integração
-        
-        
-            B1corr4=((-N_A*10**-24*(h**4))*(corr4i1))/(1920*(irk**4)*(T**4)*(mi**2)) #*mi
-            
-            
-            Btotal1= (B1 + B1corr1 + B1corr2 + B1corr3 + B1corr4) #soma de cada um dos coef encontrados resultando no coeficiente total
+            Btotal1= (B1) #soma de cada um dos coef encontrados resultando no coeficiente total
             
 
 
             
             Tstr.append(T) #temperaturas usadas são colocadas na lista
             
-            Bmonte.append(Bmonte1)
             Bstr.append(Btotal1) #Coef total achado é alocado na lista
+
+            Bmonte.append(B1mc)
             print('B=', Btotal1, 'para T=',T)
             
-        for T in range(100, 300, 25):  #CALCULOS QUE SERÃO FEITOS NO SEGUNDO INTERVALO DE TEMPERATURA
+        for T in range(100, 300, 35):  #CALCULOS QUE SERÃO FEITOS NO SEGUNDO INTERVALO DE TEMPERATURA
 
             integralprinc2, err0i2 =quad(fprincipal,0,np.inf) #integração
         # print(integral, err3)
-            B2=(2*np.pi*N_A)*(integralprinc2+(r0**3)/3)
+            B2=(2*np.pi*N_A)*(integralprinc2+(R_0**3)/3)
         
-            inte2=monte_carlo_uniform(fprincipal,a=0,b=2,n=1800)
-            Bmonte2=(2*np.pi*N_A)*(inte2+(r0**3)/3)
+         
             
-            corr1i2, err1i2 =quad(f1correção,0,np.inf) #integração
-        
-            B2corr1=((N_A*10**-24*(h**2))*(corr1i2))/(48*(irk**3)*(T**3)*mi) #coef do virial da primeira correção
-
-
-
-            corr2i2, err2i2 =quad(f2correção,0,np.inf) #integração
-        
-            B2corr2=((-N_A*10**-24)*(corr2i2))/(48*(irk**3)*(T**3)) #coef do virial da segunda correção
-            
-        
-
-        
-            corr3i2, err3i2 =quad(f3correção,0,np.inf) #integração
-
-            B2corr3=((-N_A*10**-24)*(corr3i2))/(48*(irk**3)*(T**3)) #coef do virial da terceira correção
-
-        
-            corr4i2, err4i2 =quad(f4correção,0,np.inf) #integração
-        
-            B2corr4=((-N_A*10**-24*(h**4))*(corr4i2))/(1920*(irk**4)*(T**4)*(mi**2)) #coef do virial da quarta correção
-            
-            
-            Btotal2= (B2 + B2corr1 + B2corr2 + B2corr3 + B2corr4) #soma de cada um dos coef encontrados resultando no coeficiente total
-            
+            Btotal2= (B2) #soma de cada um dos coef encontrados resultando no coeficiente total
+            inte2=monte_carlo_uniform(fprincipal,a=0,b=10,n=1800)
+            B2mc=(2*np.pi*N_A)*(inte1+(R_0**3)/3)              
             #d1 = decimal.Decimal(B1)
             
             Tstr.append(T) #temperaturas usadas são colocadas na lista
             
-            Bmonte.append(Bmonte2)
 
             Bstr.append(Btotal2) #Coef total achado é alocado na lista
+            Bmonte.append(B2mc)
+
             print('B=',Btotal2, 'para T=',T)
             
             
             
-        for T in range(300, 500, 50):  #CALCULOS QUE SERÃO FEITOS NO TERCEIRO INTERVALO DE TEMPERATURA
+        for T in range(300, 500, 70):  #CALCULOS QUE SERÃO FEITOS NO TERCEIRO INTERVALO DE TEMPERATURA
         
 
 
             integralprinc3, err0i3 =quad(fprincipal,0,np.inf) #integração
             #print(integral, err3)
-            B3=(2*np.pi*N_A)*(integralprinc3+(r0**3)/3) #coef do virial principal
+            B3=(2*np.pi*N_A)*(integralprinc3+(R_0**3)/3) #coef do virial principal
             
-            inte3=monte_carlo_uniform(fprincipal,a=0,b=2,n=1800)
-            Bmonte3=(2*np.pi*N_A)*(inte3+(r0**3)/3)
-        
-            corr1i3, err1i3 =quad(f1correção,0,np.inf) #integração
-        
-            B3corr1=((N_A*10**-24*(h**2))*(corr1i3))/(48*(irk**3)*(T**3)*mi) #coef do virial da segunda correção
-
-
-
-            corr2i3, err2i3 =quad(f2correção,0,np.inf) #integração
-            #print(integral1)
-            #print(integral1, T)
-            B3corr2=((-N_A*10**-24)*(corr2i3))/(48*(irk**3)*(T**3)) #coef do virial da segunda correção
+            inte3=monte_carlo_uniform(fprincipal,a=0,b=10,n=1800)
+            B3mc=(2*np.pi*N_A)*(inte1+(R_0**3)/3)    
             
-        
-        # d1 = decimal.Decimal(B1)
-        
-            corr3i3, err3i3 =quad(f3correção,0,np.inf) #integração
-            #print(integral1)
-            #print(integral1, T)
-            B3corr3=((-N_A*10**-24)*(corr3i3))/(48*(irk**3)*(T**3)) #coef do virial da terceira correção
-
-        
-            corr4i3, err4i3 =quad(f4correção,0,np.inf) #integração
-            #print(integral1)
-            #print(integral1, T)
-            B3corr4=((-N_A*10**-24*(h**4))*(corr4i3))/(1920*(irk**4)*(T**4)*(mi**2)) #coef do virial da quarta correção
-            
-            
-            Btotal3= (B3 + B3corr1 + B3corr2 + B3corr3 + B3corr4)  #soma de cada um dos coef encontrados resultando no coeficiente total
+            Btotal3= (B3)  #soma de cada um dos coef encontrados resultando no coeficiente total
             
             #d1 = decimal.Decimal(B1)
             
             Tstr.append(T) #temperaturas usadas são colocadas na lista
             
-            Bmonte.append(Bmonte3)
             Bstr.append(Btotal3) #Coef total achado é alocado na lista
+            Bmonte.append(B3mc)
+
             print('B=',Btotal3, 'para T=',T)
-            
+
+
 
         r = np.linspace(0, 10, 100)
 
+     
+        Ur = U(r)
+      
+            
+   
+        st.write(Ur, type(Ur))
 
-        integral_inf, err_inf =quad(lim_inf,0,np.inf) #integração
-            #print(integral, err3)
-        B_inf=(2*np.pi)*(integral_inf+(r0**3)/3) #coef do virial principal
-        print('B_inf=', B_inf)
 
-        integral_sup, err_sup =quad(lim_sup,0,np.inf) #integração
-            #print(integral, err3)
-        B_sup=(2*np.pi)*(integral_sup+(r0**3)/3) #coef do virial principal
-        print('B_sup=', B_sup)
+
         #CRIANDO O GRÁFICO
 
 
         # Create two subplots and unpack the output array immediately
-        f, (ax1, ax2) = plt.subplots(1, 2, constrained_layout=True)
+
+        fig1 = go.Figure()
+
+        fig1.add_trace(
+            go.Scatter(x=r, y=Ur, name='SEP'))
+        
+        fig1.update_layout(height=600, width=800,
+                            title_text="Graph of the PES", yaxis_title='U(eV)',
+                            xaxis_title="R")
 
 
-        ax1.plot(Tstr, Bstr, label = 'dados calculados')
-        ax1.plot(T_ref,B_ref,'.', label = 'dados de referência')
-        ax1.plot(Tstr, Bmonte, label = 'dados monte carlo') #SEM CORREÇÕES QUANTICAS
 
-        ax1.set_title('(a)')
-        ax2.set_title('(b)')
-        ax2.plot(r, U(r))
 
-        ax1.set_xlim([-10, 500]) #1.2 B 
-        ax1.set_ylim([-300, 35]) #inferior : B(T=10) * 1.1 superior: B(T=500)* 1.2
-        ax2.set_xlim([0.3, 6])
-        ax2.set_ylim([-1.5*De, 2*De]) #limite inferior De*1.5 #limite superior 3*De
+        fig2 = go.Figure()
 
-        ax1.set_ylabel(r'$B(T)[cm^3/mol]$')
-        ax1.set_xlabel(r'$Temperature[K]$', labelpad=1)
-        ax2.set_ylabel(r'$U(r)[kcal/mol]$', labelpad=1)
-        ax2.set_xlabel(r'$r [\AA]$',labelpad=1)
-        '''
-        ax_image = fig.add_subplot(Tstr, Bstr)
-        ax_image.set_title('Imagem original')
-        ax_image.imshow(image, cmap='gray')
+        fig2.add_trace(
+            go.Scatter(x=Tstr, y=Bstr, name='dados calculados'))
+        fig2.add_trace(
+            go.Scatter(x=Tstr, y=B_ref, name='dados de referencia'))
+        fig2.add_trace(
+            go.Scatter(x=Tstr, y=Bmonte, name='dados calculados com Monte Carlo'))
 
-        '''
-        #plt.subplot(Tstr, Bstr)
-        #plt.scatter(Tstr, Bstr)
-        #plt.title(f'Gráficos (a) do , {name}. You are {age}.')
 
-        ax1.legend()
+        fig2.update_layout(height=600, width=800,
+                            title_text="Graph of the Second Virial Coefficient B per Temperature T", yaxis_title='B(T)[cm^3/mol]',
+                            xaxis_title="T[K]")
+        #fig2.update_yaxes(range=[-1000000, 5000000])
 
-        plt.show()
+
+        st.plotly_chart(fig1, use_container_width=True)
+
+        st.plotly_chart(fig2, use_container_width=True)
+
+
+
+        st.success('Calculations finished!', icon="✅")
