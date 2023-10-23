@@ -65,11 +65,10 @@ if gas_type == 'A2B2':
         ('H2', 'F2', 'Cl2', 'Br2'))
     gas = monomero1 + monomero2
 
-data_virial = pd.DataFrame()
 
 class constants:
-
-    rk = 7.24356  # 7.24297  #1/(8.6173324e-5)
+    kb = 0.0019872041*1000
+    rk =  7.24356  # 7.24297  #1/(8.6173324e-5)
     h = 1.05459  # 1.05451   # 6.582119569e-16 #6.582119569  * 10e-16
     N_A = 6.02252e-1
     irk = 1.0 / rk
@@ -1103,8 +1102,8 @@ if st.button('Calculate'):
                 
 
 
-                data_virial = data_virial.append({'Temperature':T,'Classical Virial Coefficient':result.mean, 'First Virial Correction':result_c1.mean, 
-                    'Second Virial Correction':result_c2.mean, 'Third Virial Correction':result_c3.mean, 'Fourth Virial Correction':result_c4.mean,},ignore_index=True)
+                data_virial = pd.DataFrame({'Temperature':T,'Classical Virial Coefficient':result.mean, 'First Virial Correction':result_c1.mean, 
+                    'Second Virial Correction':result_c2.mean, 'Third Virial Correction':result_c3.mean, 'Fourth Virial Correction':result_c4.mean,}, index = [0])
 
 
             st.write(data_virial)
@@ -1180,16 +1179,16 @@ if st.button('Calculate'):
                 go.Scatter(x=Tstr, y=B_clas, name='B classic')
             )
             fig3.add_trace(
-                go.Scatter(x=Tstr, y=B_main, name='B main')
+                go.Scatter(x=Tstr, y=B_main, name='B total')
             )
             fig3.add_trace(
                 go.Scatter(x=T_state, y=B_virial_state_ref,
                            name='B virial state reference')
             )
 
-            fig3.add_trace(
+            '''fig3.add_trace(
                 go.Scatter(x=Tstr, y=B_plus_all_except_c2, name='B without c2')
-            )
+            )'''
 
             # ax3.plot(T_ref, B_ref,   color='b',label = 'ref') #Breferencia
 
@@ -1217,13 +1216,13 @@ if st.button('Calculate'):
 
             fig1.update_layout(height=600, width=800,
                                title_text="Graph of Leading Configurations per Distance", xaxis_title=r"$r[A]$",
-                               yaxis_title='U[eV]'
+                               yaxis_title='U[kcal/mol]'
                                 )
             st.plotly_chart(fig1, use_container_width=True)
 
             fig2.update_layout(height=600, width=800,
                                title_text="Graph of Complex Energies per Distance", xaxis_title=r"$r[A]$",
-                               yaxis_title='U[eV]')
+                               yaxis_title='U[kcal/mol]')
             st.plotly_chart(fig2, use_container_width=True)
 
             fig3.update_layout(height=600, width=800,
