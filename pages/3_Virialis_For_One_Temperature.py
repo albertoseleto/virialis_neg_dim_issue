@@ -11,6 +11,7 @@ import pandas as pd
 import vegas
 import time
 from scipy.optimize import curve_fit
+from scipy.integrate import nquad
 from statistics import mean
 from numpy import arange
 from pandas import read_csv
@@ -667,7 +668,7 @@ if st.button('Calculate'):
 
             B_B2_ref = []
             T_B2_ref = []
-            T = step
+
             Reqs = np.array([H.Req, X.Req, Z.Req, Ta.Req, Tb.Req, L.Req])
 
             media_Reqs = mean(Reqs)
@@ -905,7 +906,6 @@ if st.button('Calculate'):
                 def B_B2_ref(T):
                     return B_references.BH2_ref(T)
                 
-                
             #st.write('media_Reqs = ', media_Reqs, 'r1 = ',r1, 'r2 = ',r2, 'r3 = ', r3, 'r4 = ',r4 ,  'I1 = ', I1,  'I2 = ', I2,  'mi1 = ', mi1,  'mi2 = ', mi2)
 
             B_virial_state_ref = []
@@ -918,13 +918,33 @@ if st.button('Calculate'):
             lim_sup = 10*lims/2
             r0 = 4.22  # mean(Reqs)
 
-        
+            for T in range(60, 500, 5):
 
-            B_cruzado = (0.25*(22.1*Mb + Ma*(22.1 + Mb*T)) * (0.083 + 0.0695*w1 + 0.0695*w2) * (rho_1**(1/3) + rho_2**(1/3))**3) / ((10.9*Ma + 10.9*Mb + Ma*Mb*T)*(zc1 + zc2) * rho_1 * rho_2)
+                B_cruzado = (0.25*(22.1*Mb + Ma*(22.1 + Mb*T)) * (0.083 + 0.0695*w1 + 0.0695*w2) * (
+                    rho_1**(1/3) + rho_2**(1/3))**3) / ((10.9*Ma + 10.9*Mb + Ma*Mb*T)*(zc1 + zc2) * rho_1 * rho_2)
 
-            B_virial_state = 2*x1*x2*B_cruzado + x2**2*B_A2_ref(T) + x1**2*B_B2_ref(T)
+                B_virial_state = 2*x1*x2*B_cruzado + \
+                    x2**2*B_A2_ref(T) + x1**2*B_B2_ref(T)
 
-            B_virial_state_ref.append(B_virial_state)
+                B_virial_state_ref.append(B_virial_state)
+                T_state.append(T)
+
+
+
+
+
+            def virial_quad(r, th_a, th_b, phi):
+
+
+                F = UM_FINAL(r, th_a, th_b, phi)*constants.rk/T
+
+                return constants.N_A/4 * np.sin(th_a)  * np.sin(th_b)*(r**2)*(1-np.exp(-F))
+            
+
+
+            result_scipy, err_scipy = nquad(virial_quad, [[0, np.inf], [0, np.pi], [0, np.pi], [0, 2*np.pi]], full_output=True)
+            st.write(result_scipy, err_scipy)
+            
 
             def integrand_vegas(x):
                 r = x[0]
@@ -1041,6 +1061,10 @@ if st.button('Calculate'):
                 # c4p = np.sin(th_a) * np.sin(th_b) * np.exp(-F) * (d_2r**2 + 2/r**2*(d_1r**2) + 10 * rk/(9 * T * r) * d_1r**3 - 5 * rk**2/(36 * T**2) * d_1r**4) * r**2  #talvez sem rk/T
                 #c4 = -np.pi/12 * N_A * h**2/mi * c4p *(rk/T)**2
                 return c4
+            
+
+
+
 
             integ = vegas.Integrator(
                 [[0, 10], [0, np.pi], [0, np.pi], [0, 2*np.pi]])
@@ -1057,7 +1081,7 @@ if st.button('Calculate'):
             B_correcoes = []
             B_plus_all_except_c2 = []
 
-            
+            T = step
             integ(integrand_vegas, nitn=10, neval=1000)
 
             integ(integrand_c1, nitn=10, neval=1000)
@@ -1102,13 +1126,11 @@ if st.button('Calculate'):
             B_plus_all_except_c2.append(
                 +result.mean + result_c1.mean + result_c3.mean + result_c4.mean)
             
+
+
+            data_virial = data_virial.append({'Temperature':T,'Classical Virial Coefficient':result.mean, 'First Virial Correction':result_c1.mean, 
+                'Second Virial Correction':result_c2.mean, 'Third Virial Correction':result_c3.mean, 'Fourth Virial Correction':result_c4.mean,},ignore_index=True)
             
-
-        
-            new_row = {'Temperature': T, 'Classical Virial Coefficient': result, 'First Virial Correction': result_c1, 
-           'Second Virial Correction': result_c2, 'Third Virial Correction': result_c3, 'Fourth Virial Correction': result_c4, 'reference' :B_virial_state}
-
-            data_virial = pd.concat([data_virial, pd.DataFrame(new_row, index=[0])], ignore_index=True)
 
             st.write(data_virial)
             r = np.linspace(0, 10, 100)
