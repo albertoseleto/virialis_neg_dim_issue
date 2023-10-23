@@ -448,17 +448,19 @@ if st.button('Calculate'):
         fig1.add_trace(
         go.Scatter(x=rL, y=UfitL, name='L regression')
                     )
-        fig1.add_trace(
+        '''fig1.add_trace(
         go.Scatter(x=rH, y=iniciais(rH), name='initial guess', mode = 'markers')
-                    )
+                    )'''
 
 
 
         fig1.update_layout(
             title_text="Graph of Simple Energies per Distance",
-            yaxis_title='U[eV]',  # Replace 'X Axis Label' with your desired X-axis label
+            yaxis_title='U[kcal/mol]',  # Replace 'X Axis Label' with your desired X-axis label
             xaxis_title=r"$r[A]$"   # Replace 'Y Axis Label' with your desired Y-axis label
                     )
+        fig1.update_xaxes(range=[2.2, 5.5])
+        fig1.update_yaxes(range=[-0.5, 3.5])
 
 
     
@@ -811,13 +813,16 @@ if st.button('Calculate'):
         fig1.add_trace(
         go.Scatter(x=rL, y=UfitL, name='L regression')
                     )
-        fig1.add_trace(
+        '''fig1.add_trace(
         go.Scatter(x=rH, y=iniciais(rH), name='initial guess', mode = 'markers')
-                    )
+                    )'''
         fig1.update_layout(
             title_text="Graph of Simple Energies per Distance",
-            yaxis_title='U[eV]',  # Replace 'X Axis Label' with your desired X-axis label
+            yaxis_title='U[kcal/mol]',  # Replace 'X Axis Label' with your desired X-axis label
             xaxis_title=r"$r[A]$"   # Replace 'Y Axis Label' with your desired Y-axis label
             )
+        
+        fig1.update_xaxes(range=[2.2, 5.5])
+        fig1.update_yaxes(range=[-0.5, 3.5])
 
         st.plotly_chart(fig1, use_container_width=True)
