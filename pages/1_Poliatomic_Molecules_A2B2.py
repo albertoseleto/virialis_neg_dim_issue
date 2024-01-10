@@ -18,8 +18,6 @@ from pandas import read_csv
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
-from numeric import num_diff
-from constant import constants
 ###############################
 
 # TIME MEASURE
